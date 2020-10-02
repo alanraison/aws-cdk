@@ -58,6 +58,7 @@ export class CacheBehavior {
           includeBody: edgeLambda.includeBody,
         }))
         : undefined,
+      cachePolicyId: this.props.originRequestPolicy?.toString(),
     };
   }
 

@@ -5,6 +5,7 @@ import * as lambda from '@aws-cdk/aws-lambda';
 import * as s3 from '@aws-cdk/aws-s3';
 import { App, Duration, Stack } from '@aws-cdk/core';
 import { CfnDistribution, Distribution, GeoRestriction, HttpVersion, IOrigin, LambdaEdgeEventType, PriceClass } from '../lib';
+import { OriginRequestPolicy, QueryStringCacheBehaviorType, HeadersCacheBehaviorType, CookiesCacheBehaviorType } from '../lib/origin-request-policy';
 import { defaultOrigin } from './test-origin';
 
 let app: App;
@@ -694,6 +695,60 @@ test('escape hatches are supported', () => {
       DefaultCacheBehavior: {
         ForwardedValues: {
           Headers: ['*'],
+        },
+      },
+    },
+  });
+});
+
+test('cachePolicies are supported', () => {
+  const origin = defaultOrigin();
+
+  new Distribution(stack, 'DistributionWithCachePolicy', {
+    defaultBehavior: {
+      origin,
+      originRequestPolicy: new OriginRequestPolicy(stack, 'OriginRequestPolicy', {
+        name: 'Origin Request Policy',
+        comment: 'test origin request policy',
+        cookiesConfig: {
+          cookieBehavior: CookiesCacheBehaviorType.WHITELIST,
+          cookies: ['x-my-cookie'],
+        },
+        headersConfig: {
+          headerBehavior: HeadersCacheBehaviorType.WHITELIST,
+          headers: ['x-my-header'],
+        },
+        queryStringsConfig: {
+          queryStringBehavior: QueryStringCacheBehaviorType.WHITELIST,
+          queryStrings: ['queryStringParameter'],
+        },
+      }),
+    },
+  });
+
+  expect(stack).toHaveResource('AWS::CloudFront::OriginRequestPolicy', {
+    OriginRequestPolicyConfig: {
+      Name: 'Origin Request Policy',
+      Comment: 'test origin request policy',
+      CookiesConfig: {
+        CookieBehavior: 'whitelist',
+        Cookies: ['x-my-cookie'],
+      },
+      HeadersConfig: {
+        HeaderBehavior: 'whitelist',
+        Headers: ['x-my-header'],
+      },
+      QueryStringsConfig: {
+        QueryStringBehavior: 'whitelist',
+        QueryStrings: ['queryStringParameter'],
+      },
+    },
+  });
+  expect(stack).toHaveResourceLike('AWS::CloudFront::Distribution', {
+    DistributionConfig: {
+      DefaultCacheBehavior: {
+        OriginRequestPolicyId: {
+          Ref: 'abcde',
         },
       },
     },

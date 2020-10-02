@@ -6,6 +6,7 @@ import { Construct, Node } from 'constructs';
 import { CfnDistribution } from './cloudfront.generated';
 import { GeoRestriction } from './geo-restriction';
 import { IOrigin, OriginBindConfig, OriginBindOptions } from './origin';
+import { IOriginRequestPolicy } from './origin-request-policy';
 import { CacheBehavior } from './private/cache-behavior';
 
 // v2 - keep this import as a separate section to reduce merge conflict when forward merging with the v2 branch.
@@ -704,6 +705,11 @@ export interface AddBehaviorOptions {
    * @see https://aws.amazon.com/lambda/edge
    */
   readonly edgeLambdas?: EdgeLambda[];
+
+  /**
+   * The Request Policy to use
+   */
+  readonly originRequestPolicy?: IOriginRequestPolicy;
 }
 
 /**
